@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <stdexcept>
 
-// ==================== SC-подобные структуры ====================
+// ==================== SClang-like structures ====================
 namespace sc {
     enum class Result {
         Ok,
@@ -37,7 +37,7 @@ namespace sc {
     }
 }
 
-// ==================== Доменные структуры ====================
+// ==================== domains ====================
 struct Angle {
     double value;
     bool is_known;
@@ -47,7 +47,7 @@ struct Triangle {
     Angle angles[3]; // angles[0] - A, angles[1] - B, angles[2] - C
 };
 
-// ==================== SC-агенты ====================
+// ==================== agents ====================
 class CalculateAnglesAgent {
 public:
     sc::Result execute(sc::MemoryContext& ctx) {
@@ -70,13 +70,13 @@ public:
                 if (!angle.is_known) {
                     angle.value = 180.0 - sum_known;
                     angle.is_known = true;
-                    sc::log_sc_event("Вычислен угол: " + std::to_string(angle.value) + "°");
+                    sc::log_sc_event("Calculated angle: " + std::to_string(angle.value) + "°");
                     return sc::Result::Ok;
                 }
             }
         }
 
-        sc::log_sc_event("Ошибка вычисления углов");
+        sc::log_sc_event("Angle calculation error");
         return sc::Result::Error;
     }
 };
@@ -91,7 +91,7 @@ public:
             if (angle.is_known && std::abs(angle.value - 90.0) < 0.001) {
                 bool is_right = true;
                 ctx.store("is_right_triangle", &is_right);
-                sc::log_sc_event("Обнаружен прямой угол (90°)");
+                sc::log_sc_event("Right angle detected (90°)");
                 return sc::Result::Ok;
             }
         }
@@ -105,7 +105,7 @@ public:
 class TriangleProcessingAgent {
 public:
     sc::Result execute(sc::MemoryContext& ctx) {
-        sc::log_sc_event("Запуск обработки треугольника");
+        sc::log_sc_event("Starting triangle processing");
 
         CalculateAnglesAgent angles_agent;
         if (angles_agent.execute(ctx) != sc::Result::Ok) {
@@ -118,13 +118,13 @@ public:
         }
 
         bool* is_right = ctx.get<bool>("is_right_triangle");
-        sc::log_sc_event(*is_right ? "Треугольник прямоугольный" : "Треугольник не прямоугольный");
+        sc::log_sc_event(*is_right ? "Triangle is right-angled" : "Triangle is not right-angled");
         
         return sc::Result::Ok;
     }
 };
 
-// ==================== Визуализация SC-структур ====================
+// ==================== CLI UI SClang-like ====================
 void print_sc_memory(const sc::MemoryContext& ctx) {
     std::cout << "=== SC Memory Dump ===\n";
     for (const auto& [key, type] : ctx.types) {
@@ -147,12 +147,12 @@ void print_sc_memory(const sc::MemoryContext& ctx) {
     std::cout << "======================\n";
 }
 
-// ==================== Тестирование ====================
+// ==================== Testing ====================
 int main() {
-    // Инициализация SC-памяти
+    // Initialize SC memory
     sc::MemoryContext ctx;
     
-    // Тестовый треугольник 1 (90°, 45°, ?)
+    // Test triangle 1 (90°, 45°, ?)
     Triangle triangle1 = {
         { {90.0, true}, {45.0, true}, {0.0, false} }
     };
@@ -163,28 +163,28 @@ int main() {
     ctx.store("input_triangle", &triangle1);
     ctx.store("rules_set", &rules);
 
-    std::cout << "=== Тест 1: Прямоугольный треугольник ===\n";
+    std::cout << "=== Test 1: Right-angled triangle ===\n";
     print_sc_memory(ctx);
     
     TriangleProcessingAgent agent;
     auto result = agent.execute(ctx);
     
     print_sc_memory(ctx);
-    std::cout << "Результат: " << (result == sc::Result::Ok ? "SC_RESULT_OK" : "SC_RESULT_ERROR") << "\n\n";
+    std::cout << "Result: " << (result == sc::Result::Ok ? "SC_RESULT_OK" : "SC_RESULT_ERROR") << "\n\n";
 
-    // Тестовый треугольник 2 (60°, 60°, ?)
+    // Test triangle 2 (60°, 60°, ?)
     Triangle triangle2 = {
         { {60.0, true}, {60.0, true}, {0.0, false} }
     };
     ctx.store("input_triangle", &triangle2);
 
-    std::cout << "=== Тест 2: Непрямоугольный треугольник ===\n";
+    std::cout << "=== Test 2: Non-right-angled triangle ===\n";
     print_sc_memory(ctx);
     
     result = agent.execute(ctx);
     
     print_sc_memory(ctx);
-    std::cout << "Результат: " << (result == sc::Result::Ok ? "SC_RESULT_OK" : "SC_RESULT_ERROR") << "\n";
+    std::cout << "Result: " << (result == sc::Result::Ok ? "SC_RESULT_OK" : "SC_RESULT_ERROR") << "\n";
 
     return 0;
 }
